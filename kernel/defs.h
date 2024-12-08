@@ -233,3 +233,7 @@ void            kvminit(void);
 pagetable_t     proc_kpt_init(void); // 用于内核页表的初始化
 void            kvminithart(void); 
 void            proc_inithart(pagetable_t); // 将进程的内核页表保存到SATP寄存器
+
+// vmcopyin.c
+int             copyin_new(pagetable_t, char *, uint64, uint64);
+int             copyinstr_new(pagetable_t, char *, uint64, uint64);

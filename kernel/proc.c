@@ -16,6 +16,7 @@ int nextpid = 1;
 struct spinlock pid_lock;
 
 extern void uvmmap(pagetable_t pagetable, uint64 va, uint64 pa, uint64 size, int perm);
+extern void u2kvmcopy(pagetable_t pagetable, pagetable_t kernelpt, uint64 oldsz, uint64 newsz);
 extern void forkret(void);
 static void wakeup1(struct proc *chan);
 static void freeproc(struct proc *p);
@@ -265,9 +266,15 @@ growproc(int n)
 
   sz = p->sz;
   if(n > 0){
+    // 加上PLIC限制
+    if (PGROUNDUP(sz + n) >= PLIC){
+      return -1;
+    }
     if((sz = uvmalloc(p->pagetable, sz, sz + n)) == 0) {
       return -1;
     }
+    // 复制一份到内核页表
+    u2kvmcopy(p->pagetable, p->kernelpt, sz - n, sz);
   } else if(n < 0){
     sz = uvmdealloc(p->pagetable, sz, sz + n);
   }
@@ -316,6 +323,9 @@ fork(void)
   pid = np->pid;
 
   np->state = RUNNABLE;
+
+  // 复制到新进程的内核页表
+  u2kvmcopy(np->pagetable, np->kernelpt, 0, np->sz);
 
   release(&np->lock);
 
