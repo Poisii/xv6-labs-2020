@@ -15,6 +15,8 @@
 #include "defs.h"
 #include "proc.h"
 
+void backtrace(void);  // 声明backtrace函数原型，以便panic()调用
+
 volatile int panicked = 0;
 
 // lock to avoid interleaving concurrent printf's.
@@ -121,6 +123,10 @@ panic(char *s)
   printf("panic: ");
   printf(s);
   printf("\n");
+  
+  // 如果系统有实现堆栈跟踪，打印堆栈信息
+  backtrace();
+
   panicked = 1; // freeze uart output from other CPUs
   for(;;)
     ;
@@ -131,4 +137,19 @@ printfinit(void)
 {
   initlock(&pr.lock, "pr");
   pr.locking = 1;
+}
+
+// 存放于栈上用于指示错误发生位置的函数调用列表。
+void
+backtrace(void){
+  printf("backtace:\n");
+  //读取当前帧指针
+  uint64 fp = r_fp();
+  while(PGROUNDUP(fp) - PGROUNDDOWN(fp) == PGSIZE){
+    // 返回地址保存在-8偏移位置
+    uint64 ret_addr = *(uint64*)(fp - 8);
+    printf("%p\n", ret_addr);
+    // 前一个帧指针保存在-16偏移位置
+    fp = *(uint64*)(fp - 16);
+  }
 }

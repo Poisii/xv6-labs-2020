@@ -7,6 +7,8 @@
 #include "spinlock.h"
 #include "proc.h"
 
+extern void backtrace(void);
+
 uint64
 sys_exit(void)
 {
@@ -60,6 +62,10 @@ sys_sleep(void)
 
   if(argint(0, &n) < 0)
     return -1;
+
+  // 在 sys_sleep 开始时调用 backtrace 打印栈回溯
+  backtrace();
+
   acquire(&tickslock);
   ticks0 = ticks;
   while(ticks - ticks0 < n){
