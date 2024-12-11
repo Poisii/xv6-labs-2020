@@ -2,7 +2,7 @@
 #include "user/user.h"
 #include "kernel/param.h"
 
-#define MAXSZ 512
+#define MAXSZ 512 // 读取的最大字节
 // 有限状态自动机状态定义
 enum state {
   S_WAIT,         // 等待参数输入，此状态为初始状态或当前字符为空格
@@ -136,8 +136,8 @@ int main(int argc, char *argv[])
         exec(argv[1], x_argv);
       }
       arg_cnt = argc - 1;
-      clearArgv(x_argv, arg_cnt);
       wait(0);
+      clearArgv(x_argv, arg_cnt);
       break;
     default:
       break;
